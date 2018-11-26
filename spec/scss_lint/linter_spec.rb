@@ -115,21 +115,84 @@ describe SCSSLint::Linter do
       it { should_not report_lint line: 3 }
       it { should_not report_lint line: 6 }
       it { should report_lint line: 11 }
-    end
 
-    context 'when more than one linter is disabled' do
-      let(:scss) { <<-SCSS }
-        // scss-lint:disable Bogus, Fake
-        p {
-          border: fail1;
-        }
+      context 'using a CSS function split over multiple lines' do
+        subject { SCSSLint::Linter::ColorVariable.new }
+        let(:scss) { <<-SCSS }
+          p {
+            // scss-lint:disable ColorVariable
+            background: linear-gradient(
+              180deg,
+              rgba(4, 3, 2, 1) 0%,
+              rgba(4, 3, 2, 1) 100%
+            );
 
-        p {
-          border: bogus;
-        }
-      SCSS
+            a {
+              background: linear-gradient(
+                180deg,
+                rgba(4, 3, 2, 1) 0%,
+                rgba(4, 3, 2, 1) 100%
+              );
+            }
+          }
 
-      it { should_not report_lint }
+          p {
+            background: linear-gradient(
+              180deg,
+              rgba(4, 3, 2, 1) 0%,
+              rgba(4, 3, 2, 1) 100%
+            );
+          }
+        SCSS
+
+        it { should_not report_lint line: 5 }
+        it { should_not report_lint line: 6 }
+        it { should_not report_lint line: 12 }
+        it { should_not report_lint line: 13 }
+        it { should report_lint line: 21 }
+        it { should report_lint line: 22 }
+
+        context 'and has no child rules' do
+          let(:scss) { <<-SCSS }
+            p {
+              // scss-lint:disable ColorVariable
+              background: linear-gradient(
+                180deg,
+                rgba(4, 3, 2, 1) 0%,
+                rgba(4, 3, 2, 1) 100%
+              );
+            }
+
+            p {
+              background: linear-gradient(
+                180deg,
+                rgba(4, 3, 2, 1) 0%,
+                rgba(4, 3, 2, 1) 100%
+              );
+            }
+          SCSS
+
+          it { should_not report_lint line: 5 }
+          it { should_not report_lint line: 6 }
+          it { should report_lint line: 13 }
+          it { should report_lint line: 14 }
+        end
+      end
+
+      context 'when more than one linter is disabled' do
+        let(:scss) { <<-SCSS }
+          // scss-lint:disable Bogus, Fake
+          p {
+            border: fail1;
+          }
+
+          p {
+            border: bogus;
+          }
+        SCSS
+
+        it { should_not report_lint }
+      end
     end
 
     context 'when more than one linter is disabled without spaces between the linter names' do
